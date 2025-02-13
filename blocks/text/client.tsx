@@ -1,7 +1,7 @@
-import { Block } from '@/components/create-block';
-import { DiffView } from '@/components/diffview';
-import { DocumentSkeleton } from '@/components/document-skeleton';
-import { Editor } from '@/components/editor';
+import { Block } from "@/components/create-block";
+import { DiffView } from "@/components/diffview";
+import { DocumentSkeleton } from "@/components/document-skeleton";
+import { Editor } from "@/components/editor";
 import {
   ClockRewind,
   CopyIcon,
@@ -9,18 +9,18 @@ import {
   PenIcon,
   RedoIcon,
   UndoIcon,
-} from '@/components/icons';
-import { Suggestion } from '@/lib/db/schema';
-import { toast } from 'sonner';
-import { getSuggestions } from '../actions';
+} from "@/components/icons";
+import { Suggestion } from "@/src/schema";
+import { toast } from "sonner";
+import { getSuggestions } from "../actions";
 
 interface TextBlockMetadata {
   suggestions: Array<Suggestion>;
 }
 
-export const textBlock = new Block<'text', TextBlockMetadata>({
-  kind: 'text',
-  description: 'Useful for text content, like drafting essays and emails.',
+export const textBlock = new Block<"text", TextBlockMetadata>({
+  kind: "text",
+  description: "Useful for text content, like drafting essays and emails.",
   initialize: async ({ documentId, setMetadata }) => {
     const suggestions = await getSuggestions({ documentId });
 
@@ -29,7 +29,7 @@ export const textBlock = new Block<'text', TextBlockMetadata>({
     });
   },
   onStreamPart: ({ streamPart, setMetadata, setBlock }) => {
-    if (streamPart.type === 'suggestion') {
+    if (streamPart.type === "suggestion") {
       setMetadata((metadata) => {
         return {
           suggestions: [
@@ -40,18 +40,18 @@ export const textBlock = new Block<'text', TextBlockMetadata>({
       });
     }
 
-    if (streamPart.type === 'text-delta') {
+    if (streamPart.type === "text-delta") {
       setBlock((draftBlock) => {
         return {
           ...draftBlock,
           content: draftBlock.content + (streamPart.content as string),
           isVisible:
-            draftBlock.status === 'streaming' &&
+            draftBlock.status === "streaming" &&
             draftBlock.content.length > 400 &&
             draftBlock.content.length < 450
               ? true
               : draftBlock.isVisible,
-          status: 'streaming',
+          status: "streaming",
         };
       });
     }
@@ -71,7 +71,7 @@ export const textBlock = new Block<'text', TextBlockMetadata>({
       return <DocumentSkeleton blockKind="text" />;
     }
 
-    if (mode === 'diff') {
+    if (mode === "diff") {
       const oldContent = getDocumentContentById(currentVersionIndex - 1);
       const newContent = getDocumentContentById(currentVersionIndex);
 
@@ -102,9 +102,9 @@ export const textBlock = new Block<'text', TextBlockMetadata>({
   actions: [
     {
       icon: <ClockRewind size={18} />,
-      description: 'View changes',
+      description: "View changes",
       onClick: ({ handleVersionChange }) => {
-        handleVersionChange('toggle');
+        handleVersionChange("toggle");
       },
       isDisabled: ({ currentVersionIndex, setMetadata }) => {
         if (currentVersionIndex === 0) {
@@ -116,9 +116,9 @@ export const textBlock = new Block<'text', TextBlockMetadata>({
     },
     {
       icon: <UndoIcon size={18} />,
-      description: 'View Previous version',
+      description: "View Previous version",
       onClick: ({ handleVersionChange }) => {
-        handleVersionChange('prev');
+        handleVersionChange("prev");
       },
       isDisabled: ({ currentVersionIndex }) => {
         if (currentVersionIndex === 0) {
@@ -130,9 +130,9 @@ export const textBlock = new Block<'text', TextBlockMetadata>({
     },
     {
       icon: <RedoIcon size={18} />,
-      description: 'View Next version',
+      description: "View Next version",
       onClick: ({ handleVersionChange }) => {
-        handleVersionChange('next');
+        handleVersionChange("next");
       },
       isDisabled: ({ isCurrentVersion }) => {
         if (isCurrentVersion) {
@@ -144,33 +144,33 @@ export const textBlock = new Block<'text', TextBlockMetadata>({
     },
     {
       icon: <CopyIcon size={18} />,
-      description: 'Copy to clipboard',
+      description: "Copy to clipboard",
       onClick: ({ content }) => {
         navigator.clipboard.writeText(content);
-        toast.success('Copied to clipboard!');
+        toast.success("Copied to clipboard!");
       },
     },
   ],
   toolbar: [
     {
       icon: <PenIcon />,
-      description: 'Add final polish',
+      description: "Add final polish",
       onClick: ({ appendMessage }) => {
         appendMessage({
-          role: 'user',
+          role: "user",
           content:
-            'Please add final polish and check for grammar, add section titles for better structure, and ensure everything reads smoothly.',
+            "Please add final polish and check for grammar, add section titles for better structure, and ensure everything reads smoothly.",
         });
       },
     },
     {
       icon: <MessageIcon />,
-      description: 'Request suggestions',
+      description: "Request suggestions",
       onClick: ({ appendMessage }) => {
         appendMessage({
-          role: 'user',
+          role: "user",
           content:
-            'Please add suggestions you have that could improve the writing.',
+            "Please add suggestions you have that could improve the writing.",
         });
       },
     },

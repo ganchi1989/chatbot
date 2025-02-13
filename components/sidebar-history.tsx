@@ -1,9 +1,8 @@
 "use client";
 
-import { isToday, isYesterday, subMonths, subWeeks } from "date-fns";
+import { isToday, isYesterday, subMonths, subWeeks, format } from "date-fns";
 import Link from "next/link";
 import { useParams, usePathname, useRouter } from "next/navigation";
-
 import { memo, useEffect, useState } from "react";
 import { toast } from "sonner";
 import useSWR from "swr";
@@ -48,7 +47,7 @@ import {
 import type { Chat } from "@/src/schema";
 import { fetcher } from "../lib/utils";
 
-import { useChatVisibility } from "@/hooks/use-chat-visibility";
+//import { useChatVisibility } from "@/hooks/use-chat-visibility";
 
 type GroupedChats = {
   today: Chat[];
@@ -69,19 +68,27 @@ const PureChatItem = ({
   onDelete: (chatId: string) => void;
   setOpenMobile: (open: boolean) => void;
 }) => {
-  const { visibilityType, setVisibilityType } = useChatVisibility({
-    chatId: chat.id,
-    initialVisibility: chat.visibility,
-  });
+  // Use lastMessageAt if available, fallback to createdAt
+  const lastTime = chat.createdAt;
 
   return (
-    <SidebarMenuItem>
+    <SidebarMenuItem className="mb-4 p-2">
       <SidebarMenuButton asChild isActive={isActive}>
-        <Link href={`/chat/${chat.id}`} onClick={() => setOpenMobile(false)}>
-          <span>{chat.title}</span>
+        <Link
+          href={`/chat/${chat.id}`}
+          onClick={() => setOpenMobile(false)}
+          className="block p-2"
+        >
+          <div className="flex flex-col justify-center min-h-[3rem]">
+            <span className="line-clamp-1 text-sm font-medium">
+              {chat.title}
+            </span>
+            <div className="text-xs text-muted-foreground mt-0.5">
+              {format(new Date(lastTime), "yyyy-MM-dd h:mma")}
+            </div>
+          </div>
         </Link>
       </SidebarMenuButton>
-
       <DropdownMenu modal={true}>
         <DropdownMenuTrigger asChild>
           <SidebarMenuAction
@@ -94,6 +101,7 @@ const PureChatItem = ({
         </DropdownMenuTrigger>
 
         <DropdownMenuContent side="bottom" align="end">
+          {/*
           <DropdownMenuSub>
             <DropdownMenuSubTrigger className="cursor-pointer">
               <ShareIcon />
@@ -130,7 +138,7 @@ const PureChatItem = ({
               </DropdownMenuSubContent>
             </DropdownMenuPortal>
           </DropdownMenuSub>
-
+          */}
           <DropdownMenuItem
             className="cursor-pointer text-destructive focus:bg-destructive/15 focus:text-destructive dark:text-red-500"
             onSelect={() => onDelete(chat.id)}
@@ -168,6 +176,7 @@ export function SidebarHistory({ user }: { user: string | null }) {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const router = useRouter();
+
   const handleDelete = async () => {
     const deletePromise = fetch(`/api/chat?id=${deleteId}`, {
       method: "DELETE",
@@ -221,9 +230,7 @@ export function SidebarHistory({ user }: { user: string | null }) {
                 <div
                   className="h-4 rounded-md flex-1 max-w-[--skeleton-width] bg-sidebar-accent-foreground/10"
                   style={
-                    {
-                      "--skeleton-width": `${item}%`,
-                    } as React.CSSProperties
+                    { "--skeleton-width": `${item}%` } as React.CSSProperties
                   }
                 />
               </div>
@@ -266,7 +273,6 @@ export function SidebarHistory({ user }: { user: string | null }) {
         } else {
           groups.older.push(chat);
         }
-
         return groups;
       },
       {
@@ -287,7 +293,6 @@ export function SidebarHistory({ user }: { user: string | null }) {
             {history &&
               (() => {
                 const groupedChats = groupChatsByDate(history);
-
                 return (
                   <>
                     {groupedChats.today.length > 0 && (
@@ -396,10 +401,10 @@ export function SidebarHistory({ user }: { user: string | null }) {
         </SidebarGroupContent>
       </SidebarGroup>
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
+        <AlertDialogContent className="bg-black text-white">
+          <AlertDialogHeader className="text-white">
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogDescription className="text-white">
               This action cannot be undone. This will permanently delete your
               chat and remove it from our servers.
             </AlertDialogDescription>

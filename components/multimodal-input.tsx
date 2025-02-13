@@ -153,6 +153,7 @@ function PureMultimodalInput({
       });
 
       if (response.ok) {
+        console.log("upload successful");
         const data = await response.json();
         const { url, pathname, contentType } = data;
 

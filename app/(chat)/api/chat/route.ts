@@ -42,6 +42,7 @@ export async function POST(request: Request) {
     return new Response("Unauthorized", { status: 401 });
   }
 
+  const userId: string = session.userId!;
   const userMessage = getMostRecentUserMessage(messages);
 
   if (!userMessage) {
@@ -79,10 +80,10 @@ export async function POST(request: Request) {
         experimental_generateMessageId: generateUUID,
         tools: {
           getWeather,
-          createDocument: createDocument({ session, dataStream }),
-          updateDocument: updateDocument({ session, dataStream }),
+          createDocument: createDocument({ userId, dataStream }),
+          updateDocument: updateDocument({ userId, dataStream }),
           requestSuggestions: requestSuggestions({
-            session,
+            userId,
             dataStream,
           }),
         },
