@@ -52,7 +52,9 @@ export function AppSidebar({ user }: { user: string | null }) {
                   <PlusIcon />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent align="end">New Chat</TooltipContent>
+              <TooltipContent align="end" className="hidden sm:block">
+                New Chat
+              </TooltipContent>
             </Tooltip>
           </div>
         </SidebarMenu>
@@ -61,7 +63,12 @@ export function AppSidebar({ user }: { user: string | null }) {
         <SidebarHistory user={user} />
       </SidebarContent>
       <SidebarFooter className="flex justify-center items-center">
-        <UserButton />
+        <UserButton
+          appearance={{
+            elements: { userButtonPopoverCard: { pointerEvents: "initial" } },
+          }}
+          afterSignOutUrl="/"
+        />
       </SidebarFooter>
     </Sidebar>
   );

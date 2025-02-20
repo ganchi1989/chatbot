@@ -18,6 +18,8 @@ export interface SaveDocumentProps {
 export interface CreateDocumentCallbackProps {
   id: string;
   title: string;
+  task?: string; // additional task content
+  chat: string; // new field for full chat input (every character)
   dataStream: DataStreamWriter;
   userId: string;
 }
@@ -46,6 +48,8 @@ export function createDocumentHandler<T extends BlockKind>(config: {
       const draftContent = await config.onCreateDocument({
         id: args.id,
         title: args.title,
+        task: args.task,
+        chat: args.chat,
         dataStream: args.dataStream,
         userId: args.userId,
       });

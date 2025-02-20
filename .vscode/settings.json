@@ -1,0 +1,6 @@
+{
+  "github.gitAuthentication": true,
+  "github.branchProtection": true,
+  "git.autofetchPeriod": 180,
+  "git.autofetch": true
+}

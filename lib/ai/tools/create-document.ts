@@ -12,12 +12,14 @@ interface CreateDocumentProps {
 export const createDocument = ({ userId, dataStream }: CreateDocumentProps) =>
   tool({
     description:
-      "Create a document for a writing or content creation activities. This tool will call other functions that will generate the contents of the document based on the title and kind.",
+      "Create a document for a writing or content creation activity. This tool will call other functions that will generate the contents of the document based on the title, task, and the entire chat input.",
     parameters: z.object({
       title: z.string(),
+      task: z.string(), // additional task content
+      chat: z.string(), // <-- new parameter for full chat input (every character)
       kind: z.enum(blockKinds),
     }),
-    execute: async ({ title, kind }) => {
+    execute: async ({ title, task, chat, kind }) => {
       const id = generateUUID();
 
       dataStream.writeData({
@@ -36,12 +38,22 @@ export const createDocument = ({ userId, dataStream }: CreateDocumentProps) =>
       });
 
       dataStream.writeData({
+        type: "task",
+        content: task,
+      });
+
+      dataStream.writeData({
+        type: "chat",
+        content: chat,
+      });
+
+      dataStream.writeData({
         type: "clear",
         content: "",
       });
 
       const documentHandler = documentHandlersByBlockKind.find(
-        (documentHandlerByBlockKind) => documentHandlerByBlockKind.kind === kind
+        (handler) => handler.kind === kind
       );
 
       if (!documentHandler) {
@@ -51,6 +63,8 @@ export const createDocument = ({ userId, dataStream }: CreateDocumentProps) =>
       await documentHandler.onCreateDocument({
         id,
         title,
+        task,
+        chat, // <-- forward the complete user chat input
         dataStream,
         userId,
       });

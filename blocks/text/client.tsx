@@ -30,10 +30,11 @@ export const textBlock = new Block<"text", TextBlockMetadata>({
   },
   onStreamPart: ({ streamPart, setMetadata, setBlock }) => {
     if (streamPart.type === "suggestion") {
-      setMetadata((metadata) => {
+      setMetadata((metadata = { suggestions: [] }) => {
         return {
+          ...metadata,
           suggestions: [
-            ...metadata.suggestions,
+            ...(metadata.suggestions ?? []),
             streamPart.content as Suggestion,
           ],
         };
