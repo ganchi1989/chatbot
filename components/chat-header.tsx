@@ -7,26 +7,31 @@ import { useWindowSize } from "usehooks-ts";
 import { ModelSelector } from "@/components/model-selector";
 import { SidebarToggle } from "@/components/sidebar-toggle";
 import { Button } from "@/components/ui/button";
-import { PlusIcon, VercelIcon } from "./icons";
+import { PlusIcon, FileIcon } from "./icons";
 import { useSidebar } from "./ui/sidebar";
 import { memo } from "react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import { VisibilityType, VisibilitySelector } from "./visibility-selector";
+
+interface ChatHeaderProps {
+  chatId: string;
+  selectedModelId: string;
+  selectedVisibilityType: VisibilityType;
+  isReadonly: boolean;
+  isPdfOpen: boolean;
+  onTogglePdf: () => void;
+}
 
 function PureChatHeader({
   chatId,
   selectedModelId,
   selectedVisibilityType,
   isReadonly,
-}: {
-  chatId: string;
-  selectedModelId: string;
-  selectedVisibilityType: VisibilityType;
-  isReadonly: boolean;
-}) {
+  isPdfOpen,
+  onTogglePdf,
+}: ChatHeaderProps) {
   const router = useRouter();
   const { open } = useSidebar();
-
   const { width: windowWidth } = useWindowSize();
 
   return (
@@ -59,17 +64,39 @@ function PureChatHeader({
         />
       )}
 
-      {/* {!isReadonly && (
+      {!isReadonly && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="outline"
+              className="order-3 md:order-3 md:px-2 px-2 md:h-fit"
+              onClick={onTogglePdf}
+            >
+              <FileIcon size={16} />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Open PDF</TooltipContent>
+        </Tooltip>
+      )}
+
+      {/*
+      Uncomment the following block if you wish to include the VisibilitySelector
+      {!isReadonly && (
         <VisibilitySelector
           chatId={chatId}
           selectedVisibilityType={selectedVisibilityType}
-          className="order-1 md:order-3"
+          className="order-4 md:order-4"
         />
       )} */}
     </header>
   );
 }
 
-export const ChatHeader = memo(PureChatHeader, (prevProps, nextProps) => {
-  return prevProps.selectedModelId === nextProps.selectedModelId;
-});
+export const ChatHeader = memo(
+  PureChatHeader,
+  (prevProps, nextProps) =>
+    prevProps.selectedModelId === nextProps.selectedModelId &&
+    prevProps.selectedVisibilityType === nextProps.selectedVisibilityType &&
+    prevProps.isReadonly === nextProps.isReadonly &&
+    prevProps.isPdfOpen === nextProps.isPdfOpen
+);

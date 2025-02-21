@@ -1153,3 +1153,69 @@ export const LineChartIcon = ({ size = 16 }: { size?: number }) => (
     ></path>
   </svg>
 );
+export const ArrowLeftIcon = ({ size = 16 }: { size?: number }) => (
+  <svg
+    height={size}
+    width={size}
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+    fill="none"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    style={{ color: "currentcolor" }}
+  >
+    <path d="M15 19l-7-7 7-7" />
+  </svg>
+);
+
+export const ArrowRightIcon = ({ size = 16 }: { size?: number }) => (
+  <svg
+    height={size}
+    width={size}
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+    fill="none"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    style={{ color: "currentcolor" }}
+  >
+    <path d="M9 5l7 7-7 7" />
+  </svg>
+);
+
+export const ZoomInIcon = ({ size = 16 }: { size?: number }) => (
+  <svg
+    height={size}
+    width={size}
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+    fill="none"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    style={{ color: "currentcolor" }}
+  >
+    <circle cx="11" cy="11" r="8" />
+    <line x1="11" y1="8" x2="11" y2="14" />
+    <line x1="8" y1="11" x2="14" y2="11" />
+  </svg>
+);
+
+export const ZoomOutIcon = ({ size = 16 }: { size?: number }) => (
+  <svg
+    height={size}
+    width={size}
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+    fill="none"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    style={{ color: "currentcolor" }}
+  >
+    <circle cx="11" cy="11" r="8" />
+    <line x1="8" y1="11" x2="14" y2="11" />
+  </svg>
+);
