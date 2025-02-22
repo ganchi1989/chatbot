@@ -95,17 +95,22 @@ export async function POST(request: Request) {
                 reasoning,
               });
 
-              await saveMessages({
-                messages: sanitizedResponseMessages.map((message) => {
-                  return {
-                    id: message.id,
-                    chatId: id,
-                    role: message.role,
-                    content: message.content,
-                    createdAt: new Date(),
-                  };
-                }),
-              });
+              const messagesToSave = sanitizedResponseMessages.map(
+                (message) => ({
+                  id: message.id,
+                  chatId: id,
+                  role: message.role,
+                  content: message.content,
+                  createdAt: new Date(),
+                })
+              );
+
+              // Only attempt to save if there's at least one message
+              if (messagesToSave.length > 0) {
+                await saveMessages({
+                  messages: messagesToSave,
+                });
+              }
             } catch {
               console.error("Failed to save chat");
             }

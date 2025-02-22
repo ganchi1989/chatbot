@@ -78,6 +78,10 @@ export async function getChatById({ id }: { id: string }) {
 }
 
 export async function saveMessages({ messages }: { messages: Array<Message> }) {
+  if (!messages || messages.length === 0) {
+    console.warn("No messages to save.");
+    return;
+  }
   try {
     return await db.insert(message).values(messages);
   } catch (error) {

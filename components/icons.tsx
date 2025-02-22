@@ -1219,3 +1219,19 @@ export const ZoomOutIcon = ({ size = 16 }: { size?: number }) => (
     <line x1="8" y1="11" x2="14" y2="11" />
   </svg>
 );
+
+export const CancelIcon = ({ size = 16 }: { size?: number }) => (
+  <svg
+    height={size}
+    width={size}
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+    fill="none"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    style={{ color: "currentcolor" }}
+  >
+    <path d="M6 18L18 6M6 6l12 12" />
+  </svg>
+);

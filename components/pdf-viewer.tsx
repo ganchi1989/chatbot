@@ -1,213 +1,186 @@
 "use client";
-
-import { useState, useRef, useEffect } from "react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Document, Page, pdfjs } from "react-pdf";
-import "react-pdf/dist/esm/Page/TextLayer.css";
-import "react-pdf/dist/esm/Page/AnnotationLayer.css";
-import { UploadIcon, ZoomInIcon, ZoomOutIcon } from "@/components/icons";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerClose,
+} from "@/components/ui/drawer";
+import { FileUpload } from "@/components/ui/file-upload";
 import { cn } from "@/lib/utils";
+import { useWindowSize } from "usehooks-ts";
+import { GlobalWorkerOptions } from "pdfjs-dist";
+import "pdfjs-dist/web/pdf_viewer.css";
 
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+// Set up the worker
+GlobalWorkerOptions.workerSrc = new URL(
+  "pdfjs-dist/build/pdf.worker.mjs",
+  import.meta.url
+).toString();
+// Lector imports for PDF reading, zoom, and page navigation
+import {
+  Root,
+  Pages,
+  Page as LectorPage,
+  CanvasLayer,
+  TextLayer,
+  ZoomIn,
+  ZoomOut,
+  CurrentZoom,
+} from "@unriddle-ai/lector";
+
+// Import your custom navigation buttons component (uses lector hooks)
+import PageNavigationButtons from "./PageNavigationButtons";
+import { CancelIcon, UploadIcon } from "@/components/icons";
+
+interface ViewerState {
+  pdfFile: File | null;
+  pdfUrl: string | null;
+}
 
 export function PdfViewer({ onClose }: { onClose: () => void }) {
-  const [pdfFile, setPdfFile] = useState<File | null>(null);
-  const [numPages, setNumPages] = useState<number>(0);
-  const [isDragging, setIsDragging] = useState(false);
-  const [fileKey, setFileKey] = useState(0);
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const [scale, setScale] = useState<number>(1.0);
+  const [viewerState, setViewerState] = useState<ViewerState>({
+    pdfFile: null,
+    pdfUrl: null,
+  });
 
-  const containerRef = useRef<HTMLDivElement>(null);
+  const { width } = useWindowSize();
+  const buttonSize = width < 768 ? "sm" : "lg";
 
-  // Auto adjust scale based on container width
+  // Clean up object URL when pdfFile changes
   useEffect(() => {
-    const updateScale = () => {
-      if (containerRef.current) {
-        const containerWidth = containerRef.current.clientWidth;
-        // Assume base PDF page width of 800px. Adjust this value if needed.
-        const newScale = containerWidth / 800;
-        setScale(newScale);
+    return () => {
+      if (viewerState.pdfUrl) {
+        URL.revokeObjectURL(viewerState.pdfUrl);
       }
     };
+  }, [viewerState.pdfUrl]);
 
-    updateScale();
-    window.addEventListener("resize", updateScale);
-    return () => window.removeEventListener("resize", updateScale);
-  }, []);
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (e.target) {
-      e.target.value = "";
-    }
+  const handleFileUpload = (files: File[]) => {
+    const file = files[0];
     if (file && file.type === "application/pdf") {
-      setFileKey((prev) => prev + 1);
-      setPdfFile(file);
-      setNumPages(0);
-      setCurrentPage(1);
+      // Revoke any previous URL before creating a new one.
+      if (viewerState.pdfUrl) {
+        URL.revokeObjectURL(viewerState.pdfUrl);
+      }
+      const url = URL.createObjectURL(file);
+      setViewerState({
+        pdfFile: file,
+        pdfUrl: url,
+      });
     } else if (file) {
       alert("Please upload a valid PDF file.");
     }
   };
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDragging(false);
-    const file = e.dataTransfer.files[0];
-    if (file && file.type === "application/pdf") {
-      setFileKey((prev) => prev + 1);
-      setPdfFile(file);
-      setNumPages(0);
-      setCurrentPage(1);
-    } else if (file) {
-      alert("Please drop a valid PDF file.");
-    }
-  };
+  // The updated pdfBody now uses lector instead of react‑pdf.
+  const pdfBody = (
+    <>
+      {viewerState.pdfUrl ? (
+        <Root
+          source={viewerState.pdfUrl}
+          className="w-full h-full border overflow-hidden rounded-lg"
+          loader={<div className="p-4">Loading...</div>}
+        >
+          <div className="bg-gray-100 border-b p-1 flex items-center justify-center text-sm text-gray-600 gap-2">
+            <ZoomOut className="px-3 py-1 -mr-2 text-gray-900">-</ZoomOut>
+            <CurrentZoom className="bg-white rounded-full px-3 py-1 border text-center w-16" />
+            <ZoomIn className="px-3 py-1 -ml-2 text-gray-900">+</ZoomIn>
+          </div>
 
-  const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
-    setNumPages(numPages);
-  };
-
-  const goToPrevPage = () => {
-    if (currentPage > 1) setCurrentPage(currentPage - 1);
-  };
-
-  const goToNextPage = () => {
-    if (currentPage < numPages) setCurrentPage(currentPage + 1);
-  };
-
-  const zoomIn = () => {
-    setScale((prevScale) => prevScale + 0.2);
-  };
-
-  const zoomOut = () => {
-    setScale((prevScale) => Math.max(prevScale - 0.2, 0.2));
-  };
-
-  return (
-    <div className="flex flex-col h-full w-full bg-white">
-      <div className="flex items-center justify-between p-2 border-b">
-        <h3 className="font-semibold">PDF Viewer</h3>
-        <div className="flex items-center space-x-2">
-          {pdfFile && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className={cn(
-                "flex items-center text-muted-foreground cursor-pointer"
-              )}
-              onClick={() => {
-                document.getElementById("reupload-input")?.click();
-              }}
-            >
-              <UploadIcon size={16} className="mr-1" />
-              Reupload
-            </Button>
-          )}
-          <input
-            id="reupload-input"
-            type="file"
-            onChange={handleFileChange}
-            accept="application/pdf"
-            hidden
-          />
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onClose}
-            className="text-muted-foreground"
-          >
-            Close
-          </Button>
-        </div>
-      </div>
-      {pdfFile && numPages > 0 && (
-        <div className="flex items-center justify-center p-2 border-t space-x-4">
-          <Button onClick={zoomOut} variant="ghost" size="sm">
-            <ZoomOutIcon size={16} />
-          </Button>
-          <Button
-            onClick={goToPrevPage}
-            disabled={currentPage === 1}
-            variant="ghost"
-            size="sm"
-          >
-            Prev
-          </Button>
-          <span className="mx-4">
-            Page {currentPage} of {numPages}
-          </span>
-          <Button
-            onClick={goToNextPage}
-            disabled={currentPage === numPages}
-            variant="ghost"
-            size="sm"
-          >
-            Next
-          </Button>
-          <Button onClick={zoomIn} variant="ghost" size="sm">
-            <ZoomInIcon size={16} />
-          </Button>
+          {/* PDF Pages */}
+          <Pages>
+            <LectorPage>
+              <CanvasLayer />
+              <TextLayer />
+            </LectorPage>
+          </Pages>
+          <PageNavigationButtons />
+        </Root>
+      ) : (
+        <div className="w-full h-full flex items-center justify-center p-6">
+          <FileUpload onChange={handleFileUpload} />
         </div>
       )}
-      <div ref={containerRef} className="flex-1 p-4 overflow-auto">
-        {pdfFile ? (
-          <Document
-            key={fileKey}
-            file={pdfFile}
-            onLoadSuccess={onDocumentLoadSuccess}
-          >
-            <Page
-              pageNumber={currentPage}
-              scale={scale}
-              renderTextLayer={false} // Disable text layer rendering to prevent AbortException warnings.
-              className="mx-auto mb-4"
-            />
-          </Document>
-        ) : (
-          <div
-            className="relative flex flex-col items-center justify-center h-full border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 transition-colors hover:border-muted-foreground/50"
-            onDragOver={(e) => {
-              e.preventDefault();
-              setIsDragging(true);
-            }}
-            onDragLeave={() => setIsDragging(false)}
-            onDrop={handleDrop}
-          >
-            <input
-              type="file"
-              onChange={handleFileChange}
-              accept="application/pdf"
-              className="absolute inset-0 opacity-0 cursor-pointer"
-            />
-            <div className="hidden md:block">
-              <p className="text-muted-foreground text-center">
-                {isDragging
-                  ? "Drop your PDF here"
-                  : "Drop your PDF here or click to browse."}
-              </p>
-            </div>
-            <div className="md:hidden">
-              <Button asChild>
-                <label
-                  htmlFor="small-screen-upload"
-                  className="w-full cursor-pointer"
-                >
-                  Upload PDF
-                </label>
+    </>
+  );
+
+  // Header with title and reupload/close buttons
+  const viewerContent = (
+    <div className="flex flex-col h-full w-full bg-white dark:bg-gray-900">
+      <div className="flex items-center justify-between p-2 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center space-x-2">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                className="order-2 md:order-1 md:px-2 px-2 md:h-fit ml-auto md:ml-0"
+                //size={buttonSize}
+                onClick={onClose}
+              >
+                <CancelIcon />
               </Button>
-              <input
-                type="file"
-                onChange={handleFileChange}
-                accept="application/pdf"
-                hidden
-                id="small-screen-upload"
-              />
-            </div>
-          </div>
-        )}
+            </TooltipTrigger>
+            <TooltipContent>Close</TooltipContent>
+          </Tooltip>
+
+          {viewerState.pdfUrl && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  //size={buttonSize}
+                  className={cn(
+                    "order-2 md:order-1 md:px-2 px-2 md:h-fit ml-auto md:ml-0 flex items-center text-gray-600 dark:text-gray-300 cursor-pointer"
+                  )}
+                  onClick={() => {
+                    // Revoke URL when reuploading
+                    if (viewerState.pdfUrl) {
+                      URL.revokeObjectURL(viewerState.pdfUrl);
+                    }
+                    setViewerState({ pdfFile: null, pdfUrl: null });
+                  }}
+                >
+                  <UploadIcon />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Upload</TooltipContent>
+            </Tooltip>
+          )}
+        </div>
       </div>
+      {pdfBody}
     </div>
   );
+
+  if (width < 768) {
+    return (
+      <Drawer
+        open
+        onOpenChange={(open) => {
+          if (!open) onClose();
+        }}
+      >
+        <DrawerContent className="flex flex-col h-full bg-white dark:bg-gray-900">
+          <DrawerHeader className="border-b border-gray-200 dark:border-gray-700">
+            <DrawerTitle className="font-sans font-semibold text-gray-800 dark:text-gray-100">
+              PDF Viewer
+            </DrawerTitle>
+            <DrawerClose
+              onClick={onClose}
+              className="text-gray-600 dark:text-gray-300"
+            />
+          </DrawerHeader>
+          {pdfBody}
+        </DrawerContent>
+      </Drawer>
+    );
+  }
+
+  return viewerContent;
 }
+
+export default PdfViewer;
