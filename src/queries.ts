@@ -11,6 +11,7 @@ import {
   type Message,
   message,
   vote,
+  pdf, // Import the pdf table here
 } from "./schema";
 import { BlockKind } from "@/components/block";
 
@@ -319,6 +320,62 @@ export async function updateChatVisiblityById({
     return await db.update(chat).set({ visibility }).where(eq(chat.id, chatId));
   } catch (error) {
     console.error("Failed to update chat visibility in database");
+    throw error;
+  }
+}
+export async function savePdf({
+  id,
+  url,
+  chatId,
+}: {
+  id: string;
+  url: string;
+  chatId: string;
+}) {
+  try {
+    return await db.insert(pdf).values({
+      id,
+      url,
+      chatId,
+    });
+  } catch (error) {
+    console.error("Failed to save pdf in database");
+    throw error;
+  }
+}
+
+export async function updatePdf({
+  id,
+  url,
+  chatId,
+}: {
+  id: string;
+  url: string;
+  chatId: string;
+}) {
+  try {
+    return await db
+      .update(pdf)
+      .set({
+        url,
+        chatId, // Add chatId to the update operation
+      })
+      .where(eq(pdf.id, id));
+  } catch (error) {
+    console.error("Failed to update pdf in database");
+    throw error;
+  }
+}
+
+export async function getPdfByChatId({ chatId }: { chatId: string }) {
+  try {
+    const [selectedPdf] = await db
+      .select()
+      .from(pdf)
+      .where(eq(pdf.chatId, chatId));
+    return selectedPdf;
+  } catch (error) {
+    console.error("Failed to get pdf by chatId from database");
     throw error;
   }
 }

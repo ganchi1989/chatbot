@@ -106,3 +106,14 @@ export const suggestion = pgTable(
 );
 
 export type Suggestion = InferSelectModel<typeof suggestion>;
+
+export const pdf = pgTable("Pdf", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+  url: text("url").notNull(),
+  chatId: uuid("chatId") // Changed from chat_id to chatId to match your code
+    .notNull()
+    .references(() => chat.id, { onDelete: "cascade" }),
+});
+
+export type Pdf = InferSelectModel<typeof pdf>;
