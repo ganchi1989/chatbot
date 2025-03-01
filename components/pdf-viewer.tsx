@@ -55,7 +55,7 @@ export function PdfViewer({ onClose }: { onClose: () => void }) {
   const [isLoading, setIsLoading] = useState(false);
 
   const { width } = useWindowSize();
-  const buttonSize = width < 768 ? "sm" : "lg";
+
   const params = useParams();
   const chatId =
     typeof params.id === "string"
@@ -275,22 +275,25 @@ export function PdfViewer({ onClose }: { onClose: () => void }) {
         <Root
           source={localPdfUrl}
           // h-[calc(100vh-80px)] is very important dont change
-          className="flex bg-gray-50 h-[calc(100vh-80px)]"
+          className="flex flex-col bg-gray-50 h-[calc(100vh-80px)]"
           loader={<div className="p-4">Loading...</div>}
         >
-          <div className="relative flex-1 overflow-auto">
-            <div className="bg-gray-100 border-b p-1 flex items-center justify-center text-sm text-gray-600 gap-2">
-              <ZoomOut className="px-3 py-1 -mr-2 text-gray-900">-</ZoomOut>
-              <CurrentZoom className="bg-white rounded-full px-3 py-1 border text-center w-16" />
-              <ZoomIn className="px-3 py-1 -ml-2 text-gray-900">+</ZoomIn>
-            </div>
+          <div className="bg-gray-100 border-b p-1 flex items-center justify-center text-sm text-gray-600 gap-2 sticky top-0 z-10">
+            <ZoomOut className="px-3 py-1 -mr-2 text-gray-900">-</ZoomOut>
+            <CurrentZoom className="bg-white rounded-full px-3 py-1 border text-center w-16" />
+            <ZoomIn className="px-3 py-1 -ml-2 text-gray-900">+</ZoomIn>
+          </div>
 
-            <Pages className="p-4 h-full">
+          <div className="relative flex-1 overflow-auto">
+            <Pages className="p-4 pb-16 h-full">
               <Page>
                 <CanvasLayer />
                 <TextLayer />
               </Page>
             </Pages>
+          </div>
+
+          <div className="sticky bottom-0 bg-white border-t py-2 px-4 shadow-md z-10">
             <PageNavigationButtons />
           </div>
         </Root>
@@ -369,16 +372,42 @@ export function PdfViewer({ onClose }: { onClose: () => void }) {
         onOpenChange={(open) => {
           if (!open) onClose();
         }}
+        dismissible={false}
       >
         <DrawerContent className="flex flex-col h-full bg-white dark:bg-gray-900">
-          <DrawerHeader className="border-b border-gray-200 dark:border-gray-700">
-            <DrawerTitle className="font-sans font-semibold text-gray-800 dark:text-gray-100">
-              PDF Viewer
-            </DrawerTitle>
-            <DrawerClose
-              onClick={onClose}
-              className="text-gray-600 dark:text-gray-300"
-            />
+          <DrawerHeader className="border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+            <DrawerTitle className="font-sans font-semibold text-gray-800 dark:text-gray-100"></DrawerTitle>
+            <div className="flex items-center space-x-2">
+              {viewerState.pdfUrl && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="px-2 h-8 flex items-center text-gray-600 dark:text-gray-300"
+                  onClick={() => {
+                    // Revoke URL when reuploading
+                    if (localPdfUrl && localPdfUrl.startsWith("blob:")) {
+                      URL.revokeObjectURL(localPdfUrl);
+                    }
+                    // Also clear from localStorage if it exists there
+                    if (typeof window !== "undefined") {
+                      localStorage.removeItem(TEMP_PDF_KEY);
+                    }
+                    setViewerState({ pdfFile: null, pdfUrl: null });
+                    setLocalPdfUrl(null);
+                  }}
+                >
+                  <UploadIcon className="h-4 w-4" />
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
+                onClick={onClose}
+              >
+                <CancelIcon className="h-4 w-4" />
+              </Button>
+            </div>
           </DrawerHeader>
           {pdfBody}
         </DrawerContent>

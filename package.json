@@ -27,6 +27,7 @@
     "@radix-ui/react-tooltip": "^1.1.8",
     "@tabler/icons-react": "^3.30.0",
     "@tailwindcss/typography": "^0.0.0-insiders.0339c42",
+    "@types/pdfkit": "^0.13.9",
     "@unriddle-ai/lector": "^2.1.0",
     "@vercel/blob": "^0.27.1",
     "ai": "^4.1.28",
